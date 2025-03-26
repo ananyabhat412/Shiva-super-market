@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiva Super Market</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #333;
+            --background-color: #f4f4f4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .navigation {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navigation a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+
+        .navigation a:hover {
+            color: #93c5fd;
+        }
+
+        /* Page Sections */
+        .page-section {
+            display: none;
+            padding: 20px;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .product-card button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* Cart Styles */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navigation {
+                flex-direction: column;
+            }
+            
+            .navigation a {
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body x-data="superMarketApp()">
+    <!-- Navigation -->
+    <div class="navigation">
+        <div>Shiva Super Market</div>
+        <div>
+            <a href="#" @click.prevent="currentPage = 'home'">Home</a>
+            <a href="#" @click.prevent="currentPage = 'categories'">Categories</a>
+            <a href="#" @click.prevent="currentPage = 'products'">Products</a>
+            <a href="#" @click.prevent="currentPage = 'cart'">
+                Cart (<span x-text="cart.length"></span>)
+            </a>
+            <a href="#" @click.prevent="currentPage = 'contact'">Contact</a>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div 
+        x-show="currentPage === 'home'" 
+        class="container page-section"
+        :class="{'active': currentPage === 'home'}"
+    >
+        <h1>Welcome to Shiva Super Market</h1>
+        <p>Your one-stop shop for all grocery needs!</p>
+        <button @click="currentPage = 'categories'">Explore Categories</button>
+    </div>
+
+    <!-- Categories Page -->
+    <div 
+        x-show="currentPage === 'categories'" 
+        class="container page-section"
+        :class="{'active': currentPage === 'categories'}"
+    >
+        <h2>Our Categories</h2>
+        <div class="product-grid">
+            <div 
+                x-for="category in Object.keys(productCategories)" 
+                class="product-card"
+                @click="selectCategory(category)"
+            >
+                <h3 x-text="category"></h3>
+                <p>Explore our <span x-text="category"></span> products</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Page -->
+    <div 
+        x-show="currentPage === 'products'" 
+        class="container page-section"
+        :class="{'active': currentPage === 'products'}"
+    >
+        <h2>All Products</h2>
+        <div class="product-grid">
+            <template x-for="product in getAllProducts()">
+                <div class="product-card">
+                    <h3 x-text="product.name"></h3>
+                    <p x-text="`$${product.price.toFixed(2)}`"></p>
+                    <button @click="addToCart(product)">Add to Cart</button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Cart Page -->
+    <div 
+        x-show="currentPage === 'cart'" 
+        class="container page-section"
+        :class="{'active': currentPage === 'cart'}"
+    >
+        <h2>Your Cart</h2>
+        <template x-if="cart.length === 0">
+            <p>Your cart is empty</p>
+        </template>
+        <div x-show="cart.length > 0">
+            <template x-for="(item, index) in cart" :key="index">
+                <div class="cart-item">
+                    <span x-text="item.name"></span>
+                    <span x-text="`$${item.price.toFixed(2)}`"></span>
+                    <button @click="removeFromCart(index)">Remove</button>
+                </div>
+            </template>
+            <div>
+                <strong>Total: $<span x-text="calculateTotal()"></span></strong>
+            </div>
+            <button @click="checkout">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Contact Page -->
+    <div 
+        x-show="currentPage === 'contact'" 
+        class="container page-section"
+        :class="{'active': currentPage === 'contact'}"
+    >
+        <h2>Contact Us</h2>
+        <form @submit.prevent="submitContact">
+            <input type="text" x-model="contactForm.name" placeholder="Your Name" required>
+            <input type="email" x-model="contactForm.email" placeholder="Your Email" required>
+            <textarea x-model="contactForm.message" placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+    </div>
+
+    <script>
+        function superMarketApp() {
+            return {
+                currentPage: 'home',
+                cart: [],
+                contactForm: {
+                    name: '',
+                    email: '',
+                    message: ''
+                },
+                productCategories: {
+                    'Dairy': [
+                        { id: 1, name: 'Milk', price: 2.99, category: 'Dairy' },
+                        { id: 2, name: 'Cheese', price: 4.50, category: 'Dairy' },
+                        { id: 3, name: 'Eggs', price: 3.25, category: 'Dairy' }
+                    ],
+                    'Bakery': [
+                        { id: 4, name: 'Bread', price: 2.49, category: 'Bakery' },
+                        { id: 5, name: 'Cake', price: 12.99, category: 'Bakery' },
+                        { id: 6, name: 'Croissant', price: 1.99, category: 'Bakery' }
+                    ],
+                    'Pantry': [
+                        { id: 7, name: 'Rice', price: 5.99, category: 'Pantry' },
+                        { id: 8, name: 'Pasta', price: 2.49, category: 'Pantry' },
+                        { id: 9, name: 'Cooking Oil', price: 4.29, category: 'Pantry' }
+                    ],
+                    'Beverages': [
+                        { id: 10, name: 'Water', price: 0.99, category: 'Beverages' },
+                        { id: 11, name: 'Juice', price: 2.49, category: 'Beverages' },
+                        { id: 12, name: 'Soft Drink', price: 1.99, category: 'Beverages' }
+                    ]
+                },
+                
+                // Methods
+                selectCategory(category) {
+                    this.currentPage = 'products';
+                },
+                
+                getAllProducts() {
+                    return Object.values(this.productCategories).flat();
+                },
+                
+                addToCart(product) {
+                    this.cart.push(product);
+                },
+                
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                },
+                
+                calculateTotal() {
+                    return this.cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+                },
+                
+                checkout() {
+                    if (this.cart.length === 0) {
+                        alert('Your cart is empty!');
+                        return;
+                    }
+                    
+                    alert(`Thank you for your purchase!\nTotal: $${this.calculateTotal()}`);
+                    this.cart = [];
+                },
+                
+                submitContact() {
+                    alert('Thank you for your message! We will get back to you soon.');
+                    // Reset form
+                    this.contactForm = {
+                        name: '',
+                        email: '',
+                        message: ''
+                    };
+                    this.currentPage = 'home';
+                }
+            };
+        }
+    </script>
+</body>
+</html>
