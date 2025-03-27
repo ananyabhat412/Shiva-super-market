@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiva Super Market</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --background-color: #f4f4f4;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 50px;
+        }
+
+        .navbar a {
+            color: var(--white);
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            color: var(--accent-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .home-banner {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .home-features {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+
+        .feature {
+            text-align: center;
+            max-width: 300px;
+            padding: 20px;
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .cart-page {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+
+        .cart-total {
+            text-align: right;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        #productCategories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .category-card {
+            width: 250px;
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .category-card:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <a href="#" onclick="loadPage('home')">🏠 Home</a>
+            <a href="#" onclick="loadPage('categories')">🛒 Categories</a>
+            <a href="#" onclick="loadPage('cart')">🛍️ Cart (<span id="cartCount">0</span>)</a>
+        </div>
+    </nav>
+
+    <div id="pageContent" class="container"></div>
+
+    <script>
+        // Products Data
+        const products = {
+            groceries: [
+                { id: 1, name: "Tata Sampann Toor Dal", price: 95, category: "Groceries" },
+                { id: 2, name: "Aashirvaad Atta", price: 260, category: "Groceries" },
+                { id: 3, name: "MDH Garam Masala", price: 75, category: "Groceries" }
+            ],
+            dairy: [
+                { id: 5, name: "Amul Taaza Milk", price: 55, category: "Dairy" },
+                { id: 6, name: "Nestle Dahi", price: 40, category: "Dairy" },
+                { id: 7, name: "Country Eggs (1 Dozen)", price: 72, category: "Dairy" }
+            ],
+            snacks: [
+                { id: 9, name: "Haldiram's Mixture", price: 50, category: "Snacks" },
+                { id: 10, name: "Lay's Magic Masala", price: 20, category: "Snacks" },
+                { id: 11, name: "Parle-G Biscuits", price: 20, category: "Snacks" }
+            ],
+            beverages: [
+                { id: 13, name: "Coca-Cola", price: 45, category: "Beverages" },
+                { id: 14, name: "Nescafe Classic Coffee", price: 180, category: "Beverages" },
+                { id: 15, name: "Tropicana Juice", price: 90, category: "Beverages" }
+            ]
+        };
+
+        // Cart Management
+        let cart = JSON.parse(localStorage.getItem('shiva-market-cart')) || [];
+
+        function updateCartCount() {
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = cart.length;
+            }
+            // Save cart to local storage
+            localStorage.setItem('shiva-market-cart', JSON.stringify(cart));
+        }
+
+        function addToCart(productId) {
+            const product = Object.values(products).flat().find(p => p.id === productId);
+            if (product) {
+                // Check if product already in cart
+                const existingProduct = cart.find(item => item.id === productId);
+                if (existingProduct) {
+                    existingProduct.quantity += 1;
+                } else {
+                    cart.push({...product, quantity: 1});
+                }
+                updateCartCount();
+                alert(`${product.name} added to cart!`);
+            }
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartCount();
+            loadPage('cart');
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartCount();
+            loadPage('cart');
+        }
+
+        // Page Rendering
+        function loadPage(page) {
+            const contentDiv = document.getElementById('pageContent');
+            
+            switch(page) {
+                case 'home':
+                    contentDiv.innerHTML = `
+                        <div class="home-banner">
+                            <h1>Welcome to Shiva Super Market</h1>
+                            <p>Your One-Stop Grocery Destination</p>
+                            <a href="#" onclick="loadPage('categories')" class="btn">Shop Now</a>
+                        </div>
+                        <div class="home-features">
+                            <div class="feature">
+                                <h3>🚚 Home Delivery</h3>
+                                <p> Anything you need in minutes</p>
+                            </div>
+                            <div class="feature">
+                                <h3>🏷️ Best Prices</h3>
+                                <p>Guaranteed offers</p>
+                            </div>
+                            <div class="feature">
+                                <h3>🛡️ Safe Packaging</h3>
+                                <p>Hygienic and secure</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'categories':
+                    contentDiv.innerHTML = `
+                        <h2>Product Categories</h2>
+                        <div id="productCategories">
+                            ${Object.keys(products).map(category => `
+                                <div class="category-card" onclick="loadCategoryProducts('${category}')">
+                                    <h3>${category.charAt(0).toUpperCase() + category.slice(1)}</h3>
+                                    <p>${products[category].length} Products</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+
+                case 'cart':
+                    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    contentDiv.innerHTML = `
+                        <div class="cart-page">
+                            <h2>Your Cart</h2>
+                            ${cart.length === 0 ? '<p>Your cart is empty</p>' : cart.map(item => `
+                                <div class="cart-item">
+                                    <span>${item.name} x ${item.quantity}</span>
+                                    <span>₹${item.price * item.quantity}</span>
+                                    <button onclick="removeFromCart(${item.id})">Remove</button>
+                                </div>
+                            `).join('')}
+                            
+                            ${cart.length > 0 ? `
+                                <div class="cart-total">
+                                    Total: ₹${total}
+                                    <button onclick="clearCart()" class="btn">Clear Cart</button>
+                                    <button class="btn">Checkout</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    break;
+            }
+            updateCartCount();
+        }
+
+        function loadCategoryProducts(category) {
+            const contentDiv = document.getElementById('pageContent');
+            contentDiv.innerHTML = `
+                <h2>${category.charAt(0).toUpperCase() + category.slice(1)} Products</h2>
+                <div id="productCategories">
+                    ${products[category].map(product => `
+                        <div class="category-card">
+                            <h3>${product.name}</h3>
+                            <p>₹${product.price}</p>
+                            <button onclick="addToCart(${product.id})">Add to Cart</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Initialize with home page
+        loadPage('home');
+        updateCartCount();
+    </script>
+</body>
+</html>
